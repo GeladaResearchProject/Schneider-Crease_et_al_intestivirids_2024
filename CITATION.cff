@@ -1,0 +1,17 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Schneider-Crease_et_al_intestivirids_2024
+message: >-
+  If you use this dataset, please cite it using the metadata
+  from this file.
+type: dataset
+authors:
+  - given-names: India
+    family-names: Schneider Crease
+    email: indiaaugusta@gmail.com
+    affiliation: Arizona State University
+    orcid: 'https://orcid.org/0000-0002-2699-5304'
+repository-code: >-
+  https://github.com/GeladaResearchProject/Schneider-Crease_et_al_intestivirids_2024
