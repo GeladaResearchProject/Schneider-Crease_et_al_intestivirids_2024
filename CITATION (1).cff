@@ -1,0 +1,52 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  Intestivirid acquisition increases across infancy in a
+  wild primate population
+message: >-
+  If you use this dataset, please cite it using the metadata
+  from this file.
+type: dataset
+authors:
+  - given-names: India
+    family-names: Schneider Crease
+    email: indiaaugusta@gmail.com
+    affiliation: Arizona State University
+    orcid: 'https://orcid.org/0000-0002-2699-5304'
+  - given-names: Isabella
+    family-names: Moya
+    email: moya@asu.edu
+    affiliation: Arizona State University
+  - given-names: Kenneth L.
+    family-names: Chiou
+    email: chiou@asu.edu
+    affiliation: Arizona State University
+  - given-names: Abebaw
+    family-names: Azanaw
+    email: abebawazanaw2013@gmail.com
+    affiliation: Ethiopian Wildlife Conservation Authority
+  - given-names: Fanuel
+    family-names: Kebede
+    affiliation: Ethiopian Wildlife Conservation Authority
+  - given-names: Belayneh
+    family-names: Abebe
+    affiliation: African Wildlife Foundation
+  - given-names: Amy
+    family-names: Lu
+    affiliation: Stony Brook University
+  - given-names: Thore J
+    family-names: Bergman
+    email: thore@umich.edu
+    affiliation: University of Michigan
+  - given-names: Noah
+    family-names: Snyder-Mackler
+    email: nsnyderm@asu.edu
+    affiliation: Arizona State University
+  - given-names: Arvind
+    family-names: Varsani
+    email: arvind.varsani@asu.edu
+    affiliation: Arizona State University
+repository-code: >-
+  https://github.com/GeladaResearchProject/Schneider-Crease_et_al_intestivirids_2024
