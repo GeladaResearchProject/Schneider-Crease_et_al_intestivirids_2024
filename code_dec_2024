@@ -1,0 +1,191 @@
+# load packages
+library(dplyr)
+library(ggplot2)
+library(lmerTest)
+library(stringr)
+library(ggbeeswarm)
+library(reshape2)
+library(ggExtra)
+library(broom.mixed)
+library(lubridate)
+library(tidyr)
+library(ggpubr)
+library(ggrain)
+library(sjPlot)
+
+
+# load data
+intest_data = read.csv("~/Desktop/Virome/crassphage/crassphage_2024/df_github_dec_2024.csv", stringsAsFactors = F)
+
+#relevel categories
+
+intest_data$dev_stage = factor(intest_data$dev_stage, levels=c('unweaned','weaned','adult'))
+intest_data$Sex = factor(intest_data$Sex)
+intest_data$Sex = relevel(intest_data$Sex, ref = "F")
+
+table(intest_data$richness.10)
+table(intest_data$richness.10, intest_data$weaned)
+table(intest_data$richness.10, intest_data$weaned, intest_data$Sex)
+
+# getting number of adults and youngs
+hist(intest_data$AgeMonth)
+hist(intest_data$AgeYear)
+range(intest_data$AgeYear) # 0.005479452 20.452054790
+nrow(intest_data) # 248 samples
+length(unique(intest_data$Individual))
+hist(intest_data$AgeYear) # the oldest non-adult sampled was 3.75 years; the youngest adult sampled was 7.24 years.
+table(intest_data$SampleType) #52 adult samples 196 infant samples
+range(intest_data[intest_data$SampleType == "adult",]$AgeYear) #  7.243836 20.452055 age range of adult samples
+range(intest_data[intest_data$SampleType == "infant",]$AgeYear) #  0.005479452 3.750684932 age range of infant samples
+
+# how many have any intestivirid @ 10% threshold?
+table(intest_data$any_intest) # 169
+(169/(169+79))*100 # 68.14516
+
+# remake infant and adult dfs now that we've added weaning information
+infants = intest_data[intest_data$SampleType == "infant",]
+nrow(infants) #196 samples from
+length(unique(infants$Individual)) #21 individuals
+
+adult = intest_data[intest_data$SampleType == "adult",]
+nrow(adult) #52 samples from
+length(unique(adult$Individual)) #22 individuals
+
+# how many adults have any crassphage 10% threshold
+table(adult$any_intest) #38
+(38/(38+14))*100 # 73.07692
+
+# how many infants have any crassphage 10% threshold
+table(infants$any_intest) #131
+(131/(131+65))*100 # 66.83673
+
+# total richness @ 10% threshold
+table(intest_data$richness.10)
+# 1 intestivirid
+(66/248)*100 # 26.6%
+# 2 intestivirid
+(44/248)*100 # 26.6%
+# 3 intestivirid
+(30/248)*100 # 12.1%
+# 4 intestivirid
+(18/248)*100 # 7.3%
+# 5 intestivirid
+(9/248)*100 # 3.6%
+# 6 intestivirid
+(2/248)*100 # 0.8%
+
+# richness by weaning
+table(intest_data$richness.10, intest_data$weaned2)
+
+### OF THOSE WITH AT LEAST ONE INTESTIVIRID ### 
+
+# df with only those that had at least 1 intestivirid at 10% threshold
+any_intest_df = intest_data[intest_data$any_intest == 1,] 
+table(any_intest_df$AgeYear > 7) #131 youong, 38 adult
+table(any_intest_df$Sex) # 95 female, 74 male
+(95/169)*100 # 56.75676% of individuals that had at least 1 intestivirid were female
+(74/169)*100 # 43.24324 of individuals that had at least 1 intestivirid were male
+table(any_intest_df$Sex, any_intest_df$weaned2) # 26 unweaned females, 40 weaned females, 29 adult females ; 14 unweaned males, 51 weaned males, 9 adult males
+
+# plot any intestivirid by age
+ggplot(any_intest_df, aes(x = AgeYear)) + geom_histogram(binwidth = 1, color = "black", fill = "orange") + theme_classic() + xlab("Age in Years") + ylab("Any intestivirid (10% coverage threshold)") + theme(text = element_text(size=20))
+
+# how many have at least one intestivirid per developmental category with? 10% threshoold
+table(intest_data$weaned2) # 76 total unweaned individuals, 
+table(intest_data$weaned2, intest_data$any_intest) # unweaned total = 76, 40 have at least one.
+
+# this groups by age and presence/absence of any crassphage 10, sums presence, and calculates frequency
+#crass_age.10 = as.data.frame(intest_data %>%
+ # group_by(weaned2, any_intest) %>%
+ # summarise(n = n()) %>%
+ # mutate(freq = n / sum(n)))
+
+# boxplot frequencies per group 10
+#crass_age.10$age.cat.3 = factor(crass_age.10$age.cat.3, levels = c("unweaned", "weaned", "adult"))
+#crass_age.10$any.crass = ifelse(crass_age.10$any.crass == 0, "No crassphage", "Crassphage")
+#crass_age.10$any.crass = factor(crass_age.10$any.crass, levels = c("Crassphage", "No crassphage"))
+
+# this groups by sex and presence/absence of any crassphage, sums presence, and calculates frequency 10%
+freq_df_sex = as.data.frame(intest_data %>%
+  group_by(weaned2, Sex, any_intest ) %>%
+  summarise(n = n()) %>%
+  mutate(freq = n / sum(n)))
+
+# prep for plotting
+freq_df_sex$plot_intest = ifelse(freq_df_sex$any_intest == 0, "absent", "present")
+freq_df_sex$dev_stage = ifelse(freq_df_sex$weaned2 == 1, "unweaned", 
+                               ifelse(freq_df_sex$weaned2 == 2, "weaned", "adult"))
+freq_df_sex$dev_stage = factor(freq_df_sex$dev_stage, levels = c("unweaned", "weaned", "adult"))
+freq_df_sex$Sex_plot = ifelse(freq_df_sex$Sex == "M", "male", "female")
+freq_df_sex$percentage = freq_df_sex$freq*100
+
+# plot
+ggplot(freq_df_sex,aes(x=as.factor(plot_intest),y=percentage,fill=Sex_plot))+
+  geom_bar(stat="identity", position = "dodge", width = 0.5)+
+  xlab("intestivirid") +ylab("percentage") +
+  theme_classic() + scale_fill_manual(values = c("aquamarine3", "steelblue4")) + theme(axis.text.x=element_text(size=rel(1))) + theme(text = element_text(size=25)) + labs(fill = "") + facet_wrap(~dev_stage,nrow=1)
+
+# subset to just presence
+freq_df_sex_yes = freq_df_sex[freq_df_sex$any_intest == 1,]
+
+# plot just presence
+ggplot(freq_df_sex_yes,aes(x=as.factor(plot_intest),y=percentage,fill=Sex_plot))+
+  geom_bar(stat="identity", position = "dodge", width = 0.5)+
+  xlab("") +ylab("intestivirid-positive samples (%)") +
+  theme_classic() + scale_fill_manual(values = c("aquamarine3", "steelblue4"))  + theme(axis.text.x=element_blank(), text = element_text(size=30)) + labs(fill = "") + facet_wrap(~dev_stage,nrow=1) + theme(panel.spacing.x=unit(-1, "lines"), axis.ticks.x=element_blank())
+
+# create plot variable
+intest_data$plot_intest = ifelse(intest_data$any_intest == 1, "intestivirid", "no intestivirid")
+
+# plot
+p = ggplot(intest_data,aes(x= 1,y=Rain90, fill =plot_intest, color =plot_intest ))+ylab("Rainfall (mm; 90 days)") + xlab("") + 
+  theme_classic() + theme(axis.text.x=element_text(size=rel(1))) + theme(text = element_text(size=30)) +  geom_rain(alpha = .5, rain.side = 'l',
+            boxplot.args = list(color = "black", outlier.shape = NA),
+            boxplot.args.pos = list(
+              position = ggpp::position_dodgenudge(x = .08, width = 0.1), width = 0.1
+            )) +
+  scale_fill_manual(values = c("steelblue4", "aquamarine3"))  + scale_color_manual(values = c("steelblue4", "aquamarine3")) + theme(axis.text.y=element_blank(), legend.title=element_blank(), axis.ticks.x=element_blank(), axis.ticks.y=element_blank()) +  coord_flip() 
+
+p + guides(fill = guide_legend(override.aes = list(color = NA)), 
+           color = "none", 
+           shape = "none") + theme(text = element_text(size=33))
+#### models
+
+##### RICHNESS ##### 
+
+# richness model
+rich_model= lmer(richness.10 ~ Sex + dev_stage + scale(Rain90) + log(NbReads) +  (1|Individual), data = intest_data, na.action = na.omit)
+summary(rich_model) # singular because individual has no variance. taking out individual doesn't affect any estimates.
+tab_model(rich_model)
+
+##### ANY INTESTIVIRID PRESENCE #####
+
+# presence of any intestivirid across whole dataset with weaned categories THIS ONE 10
+any_int = glmer(any_intest ~ Sex + dev_stage + scale(Rain90) + log(NbReads) +(1|Individual), data = intest_data, na.action = na.omit, family = "binomial")  # singular because individual has no variance.
+summary(any_int) # singular because individual has no variance. taking out individual doesn't affect any estimates.
+tab_model(any_int)
+
+#### BY INTESTIVIRID #### 
+# intest 1 all
+int_1 = glmer(gel_1_pres_10 ~ Sex + dev_stage  + scale(Rain90) + log(NbReads) + (1|Individual), data = intest_data, na.action = na.omit, family = "binomial") 
+tab_model(int_1) #nbReads
+
+# intest 2 all
+int_2 = glmer(gel_2_pres_10 ~ Sex + dev_stage  + scale(Rain90) + log(NbReads) + (1|Individual), data = intest_data, na.action = na.omit, family = "binomial") 
+tab_model(int_2) #nbReads
+
+# intest 3 all
+int_3 = glmer(gel_3_pres_10 ~ Sex + dev_stage  + scale(Rain90) + log(NbReads) + (1|Individual), data = intest_data, na.action = na.omit, family = "binomial") 
+tab_model(int_3) #nbReads, rain, weaned 
+
+# intest 4 all
+int_4 = glmer(gel_4_pres_10 ~ Sex + dev_stage  + scale(Rain90) + log(NbReads) + (1|Individual), data = intest_data, na.action = na.omit, family = "binomial") 
+tab_model(int_4) #nbReads, rain, weaned, adult 
+
+# intest 5 all
+int_5 = glmer(gel_5_pres_10 ~ Sex + dev_stage  + scale(Rain90) + log(NbReads) + (1|Individual), data = intest_data, na.action = na.omit, family = "binomial", control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=100000))) 
+tab_model(int_5) #nbReads, rain, weaned 
+
+# intest 6 all
+int_6 = glmer(gel_6_pres_10 ~ Sex + dev_stage  + scale(Rain90) + log(NbReads) + (1|Individual), data = intest_data, na.action = na.omit, family = "binomial") 
+tab_model(int_6) #nbReads, rain, weaned, adult 
